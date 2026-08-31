@@ -44,7 +44,7 @@
           const [passwordInput, setPasswordInput] = useState('');
 
           const [formData, setFormData] = useState({
-            title: '', author: '', studio: '', synopsis: '', status: 'Completado', rating: 5, premiere: '', imageUrl: ''
+            titulo: '', autor: '', estudio: '', sinopsis: '', estado: 'Completado', calificacion: 5, estreno: '', imageurl: ''
           });
 
           useEffect(() => {
@@ -70,16 +70,16 @@
 
           const filteredAnimes = useMemo(() => {
             return animes.filter(anime => {
-              const matchesFilter = activeFilter === 'Todos' || anime.status === activeFilter;
-              const matchesSearch = anime.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                    anime.author.toLowerCase().includes(searchQuery.toLowerCase());
+              const matchesFilter = activeFilter === 'Todos' || anime.estado === activeFilter;
+              const matchesSearch = anime.titulo.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    anime.autor.toLowerCase().includes(searchQuery.toLowerCase());
               return matchesFilter && matchesSearch;
             });
           }, [animes, activeFilter, searchQuery]);
 
-          const renderStars = (rating) => {
+          const renderStars = (calificacion) => {
             return Array.from({ length: 5 }, (_, i) => (
-              <span key={i} className={i < rating ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+              <span key={i} className={i < calificacion ? 'text-yellow-400' : 'text-gray-600'}>★</span>
             ));
           };
 
@@ -105,7 +105,7 @@
 
           const handleOpenAddForm = () => {
             setEditingAnime(null);
-            setFormData({ title: '', author: '', studio: '', synopsis: '', status: 'Completado', rating: 5, premiere: '', imageUrl: '' });
+            setFormData({ titulo: '', autor: '', estudio: '', sinopsis: '', estado: 'Completado', calificacion: 5, estreno: '', imageurl: '' });
             setIsFormOpen(true);
           };
 
@@ -122,14 +122,14 @@
                 const { error } = await supabaseClient
                   .from('animedatabase')
                   .update({
-                    title: formData.title,
-                    author: formData.author,
-                    studio: formData.studio,
-                    synopsis: formData.synopsis,
-                    status: formData.status,
-                    rating: formData.rating,
-                    premiere: formData.premiere,
-                    imageUrl: formData.imageUrl
+                    titulo: formData.titulo,
+                    autor: formData.autor,
+                    estudio: formData.estudio,
+                    sinopsis: formData.sinopsis,
+                    estado: formData.estado,
+                    calificacion: formData.calificacion,
+                    estreno: formData.estreno,
+                    imageurl: formData.imageurl
                   })
                   .eq('id', editingAnime.id);
 
@@ -139,14 +139,14 @@
                 const { error } = await supabaseClient
                   .from('animedatabase')
                   .insert([{
-                    title: formData.title,
-                    author: formData.author,
-                    studio: formData.studio,
-                    synopsis: formData.synopsis,
-                    status: formData.status,
-                    rating: formData.rating,
-                    premiere: formData.premiere,
-                    imageUrl: formData.imageUrl
+                    titulo: formData.titulo,
+                    autor: formData.autor,
+                    estudio: formData.estudio,
+                    sinopsis: formData.sinopsis,
+                    estado: formData.estado,
+                    calificacion: formData.calificacion,
+                    estreno: formData.estreno,
+                    imageurl: formData.imageurl
                   }]);
 
                 if (error) throw error;
@@ -249,14 +249,14 @@
                         className="relative group cursor-pointer rounded-xl overflow-hidden shadow-lg border border-gray-800 hover:border-red-500 transition-all duration-300"
                       >
                         <img 
-                          src={anime.imageUrl} 
-                          alt={anime.title} 
+                          src={anime.imageurl} 
+                          alt={anime.titulo} 
                           className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/40 to-transparent opacity-80" />
                         <div className="absolute bottom-0 p-4 w-full">
-                          <h3 className="font-bold text-lg line-clamp-2 leading-tight">{anime.title}</h3>
-                          <span className="text-xs font-semibold text-red-300 mt-1 block">{anime.status}</span>
+                          <h3 className="font-bold text-lg line-clamp-2 leading-tight">{anime.titulo}</h3>
+                          <span className="text-xs font-semibold text-red-300 mt-1 block">{anime.estado}</span>
                         </div>
                       </div>
                     ))}
@@ -293,29 +293,29 @@
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedAnime(null)}>
                   <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
                     <div className="h-64 w-full relative">
-                      <img src={selectedAnime.imageUrl} alt={selectedAnime.title} className="w-full h-full object-cover opacity-50" />
+                      <img src={selectedAnime.imageurl} alt={selectedAnime.titulo} className="w-full h-full object-cover opacity-50" />
                       <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
                       <button className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black" onClick={() => setSelectedAnime(null)}>✕</button>
                     </div>
                     
                     <div className="p-8 -mt-20 relative z-10">
-                      <h2 className="text-4xl font-extrabold mb-2 drop-shadow-lg">{selectedAnime.title}</h2>
+                      <h2 className="text-4xl font-extrabold mb-2 drop-shadow-lg">{selectedAnime.titulo}</h2>
                       <div className="flex items-center gap-3 mb-6">
                         <span className="bg-red-600/20 text-red-400 px-3 py-1 rounded-md text-sm font-bold border border-red-500/30">
-                          {selectedAnime.status}
+                          {selectedAnime.estado}
                         </span>
-                        <div className="text-xl tracking-widest">{renderStars(selectedAnime.rating)}</div>
+                        <div className="text-xl tracking-widest">{renderStars(selectedAnime.calificacion)}</div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 text-sm mb-8 text-gray-300">
-                        <div><strong className="text-gray-500 block mb-1">Autor / Mangaka</strong> {selectedAnime.author}</div>
-                        <div><strong className="text-gray-500 block mb-1">Estudio</strong> {selectedAnime.studio}</div>
-                        <div><strong className="text-gray-500 block mb-1">Estreno</strong> {selectedAnime.premiere}</div>
+                        <div><strong className="text-gray-500 block mb-1">Autor / Mangaka</strong> {selectedAnime.autor}</div>
+                        <div><strong className="text-gray-500 block mb-1">Estudio</strong> {selectedAnime.estudio}</div>
+                        <div><strong className="text-gray-500 block mb-1">Estreno</strong> {selectedAnime.estreno}</div>
                       </div>
 
                       <div>
                         <strong className="text-gray-500 block mb-2 text-sm">Sinopsis</strong>
-                        <p className="text-gray-300 leading-relaxed">{selectedAnime.synopsis}</p>
+                        <p className="text-gray-300 leading-relaxed">{selectedAnime.sinopsis}</p>
                       </div>
 
                       {isAdmin && (
@@ -353,8 +353,8 @@
                         <input 
                           type="text" 
                           placeholder="Ej. Shingeki no Kyojin" 
-                          value={formData.title} 
-                          onChange={e => setFormData({...formData, title: e.target.value})}
+                          value={formData.titulo} 
+                          onChange={e => setFormData({...formData, titulo: e.target.value})}
                           className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 focus:border-red-500 outline-none text-white" 
                           required 
                         />
@@ -366,8 +366,8 @@
                           <input 
                             type="text" 
                             placeholder="Autor" 
-                            value={formData.author} 
-                            onChange={e => setFormData({...formData, author: e.target.value})}
+                            value={formData.autor} 
+                            onChange={e => setFormData({...formData, autor: e.target.value})}
                             className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
                             required 
                           />
@@ -377,8 +377,8 @@
                           <input 
                             type="text" 
                             placeholder="Estudio" 
-                            value={formData.studio} 
-                            onChange={e => setFormData({...formData, studio: e.target.value})}
+                            value={formData.estudio} 
+                            onChange={e => setFormData({...formData, estudio: e.target.value})}
                             className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
                             required 
                           />
@@ -389,8 +389,8 @@
                         <label className="block text-xs text-gray-400 mb-1">Sinopsis</label>
                         <textarea 
                           placeholder="Escribe la sinopsis..." 
-                          value={formData.synopsis} 
-                          onChange={e => setFormData({...formData, synopsis: e.target.value})}
+                          value={formData.sinopsis} 
+                          onChange={e => setFormData({...formData, sinopsis: e.target.value})}
                           className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none h-24 text-white" 
                           required 
                         />
@@ -400,8 +400,8 @@
                         <div className="col-span-2">
                           <label className="block text-xs text-gray-400 mb-1">Estado</label>
                           <select 
-                            value={formData.status} 
-                            onChange={e => setFormData({...formData, status: e.target.value})}
+                            value={formData.estado} 
+                            onChange={e => setFormData({...formData, estado: e.target.value})}
                             className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-gray-300"
                           >
                             <option>Completado</option>
@@ -417,8 +417,8 @@
                             min="1" 
                             max="5" 
                             placeholder="Rating" 
-                            value={formData.rating} 
-                            onChange={e => setFormData({...formData, rating: Number(e.target.value)})}
+                            value={formData.calificacion} 
+                            onChange={e => setFormData({...formData, calificacion: Number(e.target.value)})}
                             className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
                             required 
                           />
@@ -430,8 +430,8 @@
                           <label className="block text-xs text-gray-400 mb-1">Estreno</label>
                           <input 
                             type="date" 
-                            value={formData.premiere} 
-                            onChange={e => setFormData({...formData, premiere: e.target.value})}
+                            value={formData.estreno} 
+                            onChange={e => setFormData({...formData, estreno: e.target.value})}
                             className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-gray-400" 
                             required 
                           />
@@ -441,8 +441,8 @@
                           <input 
                             type="url" 
                             placeholder="https://..." 
-                            value={formData.imageUrl} 
-                            onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                            value={formData.imageurl} 
+                            onChange={e => setFormData({...formData, imageurl: e.target.value})}
                             className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
                             required 
                           />
