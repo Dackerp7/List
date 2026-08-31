@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeList Manual</title>
+    <!-- Tailwind CSS desde la nube -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React y ReactDOM desde la nube -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        const FILTERS = ['Todos', 'Completado', 'Viendo', 'Esperando continuación', 'Por ver'];
+
+        function App() {
+          const [isAdmin, setIsAdmin] = useState(false);
+          const [animes, setAnimes] = useState(() => {
+            const saved = localStorage.getItem('animelist_manual_data');
+            return saved ? JSON.parse(saved) : [];
+          });
+
+          const [activeFilter, setActiveFilter] = useState('Todos');
+          const [searchQuery, setSearchQuery] = useState('');
+          const [selectedAnime, setSelectedAnime] = useState(null);
+          
+          const [isFormOpen, setIsFormOpen] = useState(false);
+          const [editingAnime, setEditingAnime] = useState(null);
+
+          const [isLoginOpen, setIsLoginOpen] = useState(false);
+          const [passwordInput, setPasswordInput] = useState('');
+          const [saveNotification, setSaveNotification] = useState(false);
+
+          const [formData, setFormData] = useState({
+            title: '', author: '', studio: '', synopsis: '', status: 'Completado', rating: 5, premiere: '', imageUrl: ''
+          });
+
+          const handleManualSave = () => {
+            localStorage.setItem('animelist_manual_data', JSON.stringify(animes));
+            setSaveNotification(true);
+            setTimeout(() => setSaveNotification(false), 2500);
+          };
+
+          const filteredAnimes = useMemo(() => {
+            return animes.filter(anime => {
+              const matchesFilter = activeFilter === 'Todos' || anime.status === activeFilter;
+              const matchesSearch = anime.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    anime.author.toLowerCase().includes(searchQuery.toLowerCase());
+              return matchesFilter && matchesSearch;
+            });
+          }, [animes, activeFilter, searchQuery]);
+
+          const renderStars = (rating) => {
+            return Array.from({ length: 5 }, (_, i) => (
+              <span key={i} className={i < rating ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+            ));
+          };
+
+          const handleLoginClick = () => {
+            if (isAdmin) {
+              setIsAdmin(false);
+            } else {
+              setPasswordInput('');
+              setIsLoginOpen(true);
+            }
+          };
+
+          const handleVerifyPassword = (e) => {
+            e.preventDefault();
+            if (passwordInput === 'Dackerdead7pool') {
+              setIsAdmin(true);
+              setIsLoginOpen(false);
+              setPasswordInput('');
+            } else {
+              alert('Contraseña incorrecta');
+            }
+          };
+
+          const handleOpenAddForm = () => {
+            setEditingAnime(null);
+            setFormData({ title: '', author: '', studio: '', synopsis: '', status: 'Completado', rating: 5, premiere: '', imageUrl: '' });
+            setIsFormOpen(true);
+          };
+
+          const handleOpenEditForm = (anime) => {
+            setEditingAnime(anime);
+            setFormData(anime);
+            setIsFormOpen(true);
+          };
+
+          const handleSaveAnime = (e) => {
+            e.preventDefault();
+            let updatedAnimes;
+            if (editingAnime) {
+              updatedAnimes = animes.map(a => a.id === editingAnime.id ? { ...formData, id: a.id } : a);
+              setSelectedAnime({ ...formData, id: editingAnime.id });
+            } else {
+              const newAnime = { ...formData, id: Date.now() };
+              updatedAnimes = [newAnime, ...animes];
+            }
+            setAnimes(updatedAnimes);
+            localStorage.setItem('animelist_manual_data', JSON.stringify(updatedAnimes));
+            setIsFormOpen(false);
+          };
+
+          const handleDeleteAnime = (id) => {
+            if (confirm('¿Estás seguro de eliminar este anime?')) {
+              const updatedAnimes = animes.filter(a => a.id !== id);
+              setAnimes(updatedAnimes);
+              localStorage.setItem('animelist_manual_data', JSON.stringify(updatedAnimes));
+              setSelectedAnime(null);
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
+              <header className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
+                <h1 className="text-2xl font-bold tracking-wider text-red-500">AnimeList</h1>
+                
+                <div className="flex items-center gap-4">
+                  {isAdmin && (
+                    <div className="flex items-center gap-2">
+                      {saveNotification && <span className="text-xs text-emerald-400 font-medium animate-pulse">¡Guardado!</span>}
+                      <button 
+                        onClick={handleManualSave}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold shadow transition-colors"
+                      >
+                        💾 Guardar Cambios
+                      </button>
+                    </div>
+                  )}
+                  <button 
+                    onClick={handleLoginClick}
+                    className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                  >
+                    {isAdmin ? 'Cerrar Sesión' : 'π'}
+                  </button>
+                </div>
+              </header>
+
+              <main className="max-w-7xl mx-auto p-6">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                  <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+                    {FILTERS.map(filter => (
+                      <button
+                        key={filter}
+                        onClick={() => setActiveFilter(filter)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          activeFilter === filter 
+                            ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' 
+                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        }`}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                    <input 
+                      type="text"
+                      placeholder="Buscar en la lista..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="bg-gray-900 border border-gray-800 px-4 py-2 rounded-lg text-sm text-gray-200 outline-none focus:border-red-500 w-full md:w-64"
+                    />
+
+                    {isAdmin && (
+                      <button 
+                        onClick={handleOpenAddForm}
+                        className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold shadow-lg transition-transform hover:scale-105 whitespace-nowrap"
+                      >
+                        + Agregar Anime
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {animes.length === 0 ? (
+                  <div className="text-center py-20 border border-dashed border-gray-800 rounded-2xl bg-gray-900/20">
+                    <p className="text-gray-500 text-lg mb-2">Tu lista está vacía.</p>
+                    {isAdmin ? (
+                      <p className="text-red-400 text-sm">Haz clic en "+ Agregar Anime" para comenzar a registrar tus obras.</p>
+                    ) : (
+                      <p className="text-gray-600 text-sm">Inicia sesión como administrador con el botón <span className="text-gray-400 font-mono">π</span> para agregar animes.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {filteredAnimes.map(anime => (
+                      <div 
+                        key={anime.id} 
+                        onClick={() => setSelectedAnime(anime)}
+                        className="relative group cursor-pointer rounded-xl overflow-hidden shadow-lg border border-gray-800 hover:border-red-500 transition-all duration-300"
+                      >
+                        <img 
+                          src={anime.imageUrl} 
+                          alt={anime.title} 
+                          className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/40 to-transparent opacity-80" />
+                        <div className="absolute bottom-0 p-4 w-full">
+                          <h3 className="font-bold text-lg line-clamp-2 leading-tight">{anime.title}</h3>
+                          <span className="text-xs font-semibold text-red-300 mt-1 block">{anime.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </main>
+
+              {/* Modal de Password */}
+              {isLoginOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                  <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+                    <h2 className="text-xl font-bold mb-4 text-red-500">Acceso Administrador</h2>
+                    <form onSubmit={handleVerifyPassword} className="space-y-4 text-sm">
+                      <input 
+                        type="password" 
+                        placeholder="Contraseña" 
+                        value={passwordInput} 
+                        onChange={e => setPasswordInput(e.target.value)}
+                        className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 focus:border-red-500 outline-none text-white" 
+                        autoFocus
+                        required 
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => setIsLoginOpen(false)} className="px-4 py-2 hover:bg-gray-800 rounded-lg text-gray-400">Cancelar</button>
+                        <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-bold">Entrar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal de Detalles */}
+              {selectedAnime && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedAnime(null)}>
+                  <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="h-64 w-full relative">
+                      <img src={selectedAnime.imageUrl} alt={selectedAnime.title} className="w-full h-full object-cover opacity-50" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
+                      <button className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black" onClick={() => setSelectedAnime(null)}>✕</button>
+                    </div>
+                    
+                    <div className="p-8 -mt-20 relative z-10">
+                      <h2 className="text-4xl font-extrabold mb-2 drop-shadow-lg">{selectedAnime.title}</h2>
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="bg-red-600/20 text-red-400 px-3 py-1 rounded-md text-sm font-bold border border-red-500/30">
+                          {selectedAnime.status}
+                        </span>
+                        <div className="text-xl tracking-widest">{renderStars(selectedAnime.rating)}</div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-8 text-gray-300">
+                        <div><strong className="text-gray-500 block mb-1">Autor / Mangaka</strong> {selectedAnime.author}</div>
+                        <div><strong className="text-gray-500 block mb-1">Estudio</strong> {selectedAnime.studio}</div>
+                        <div><strong className="text-gray-500 block mb-1">Estreno</strong> {selectedAnime.premiere}</div>
+                      </div>
+
+                      <div>
+                        <strong className="text-gray-500 block mb-2 text-sm">Sinopsis</strong>
+                        <p className="text-gray-300 leading-relaxed">{selectedAnime.synopsis}</p>
+                      </div>
+
+                      {isAdmin && (
+                        <div className="mt-8 pt-6 border-t border-gray-800 flex justify-end gap-4">
+                          <button 
+                            onClick={() => handleDeleteAnime(selectedAnime.id)} 
+                            className="px-4 py-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                          >
+                            Eliminar
+                          </button>
+                          <button 
+                            onClick={() => handleOpenEditForm(selectedAnime)} 
+                            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                          >
+                            Editar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal de Formulario */}
+              {isFormOpen && isAdmin && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                  <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                    <h2 className="text-2xl font-bold mb-6 text-red-500">
+                      {editingAnime ? 'Editar Anime' : 'Agregar Nuevo Anime Manual'}
+                    </h2>
+                    <form className="space-y-4 text-sm" onSubmit={handleSaveAnime}>
+                      
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Título de la Obra</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ej. Shingeki no Kyojin" 
+                          value={formData.title} 
+                          onChange={e => setFormData({...formData, title: e.target.value})}
+                          className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 focus:border-red-500 outline-none text-white" 
+                          required 
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Autor / Mangaka</label>
+                          <input 
+                            type="text" 
+                            placeholder="Autor" 
+                            value={formData.author} 
+                            onChange={e => setFormData({...formData, author: e.target.value})}
+                            className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
+                            required 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Estudio</label>
+                          <input 
+                            type="text" 
+                            placeholder="Estudio" 
+                            value={formData.studio} 
+                            onChange={e => setFormData({...formData, studio: e.target.value})}
+                            className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Sinopsis</label>
+                        <textarea 
+                          placeholder="Escribe la sinopsis..." 
+                          value={formData.synopsis} 
+                          onChange={e => setFormData({...formData, synopsis: e.target.value})}
+                          className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none h-24 text-white" 
+                          required 
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2">
+                          <label className="block text-xs text-gray-400 mb-1">Estado</label>
+                          <select 
+                            value={formData.status} 
+                            onChange={e => setFormData({...formData, status: e.target.value})}
+                            className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-gray-300"
+                          >
+                            <option>Completado</option>
+                            <option>Viendo</option>
+                            <option>Esperando continuación</option>
+                            <option>Por ver</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Calificación (1-5)</label>
+                          <input 
+                            type="number" 
+                            min="1" 
+                            max="5" 
+                            placeholder="Rating" 
+                            value={formData.rating} 
+                            onChange={e => setFormData({...formData, rating: Number(e.target.value)})}
+                            className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Estreno</label>
+                          <input 
+                            type="date" 
+                            value={formData.premiere} 
+                            onChange={e => setFormData({...formData, premiere: e.target.value})}
+                            className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-gray-400" 
+                            required 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">URL del Póster</label>
+                          <input 
+                            type="url" 
+                            placeholder="https://..." 
+                            value={formData.imageUrl} 
+                            onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                            className="w-full bg-gray-800 p-3 rounded-lg border border-gray-700 outline-none text-white" 
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-3 mt-6">
+                        <button type="button" onClick={() => setIsFormOpen(false)} className="px-4 py-2 hover:bg-gray-800 rounded-lg">Cancelar</button>
+                        <button type="submit" className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-bold">Guardar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
