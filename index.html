@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberList</title>
+    <!-- Logo en la pestaña del navegador (Cambia 'logo.png' por tu archivo o URL) -->
+    <link rel="icon" type="image/png" href="logo.png">
     <!-- Tailwind CSS desde la nube -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React y ReactDOM desde la nube -->
@@ -77,10 +79,26 @@
             });
           }, [animes, activeFilter, searchQuery]);
 
+          // Renderizado avanzado de estrellas con soporte para mitades (ej. 4.5)
           const renderStars = (calificacion) => {
-            return Array.from({ length: 5 }, (_, i) => (
-              <span key={i} className={i < calificacion ? 'text-yellow-400' : 'text-gray-600'}>★</span>
-            ));
+            return Array.from({ length: 5 }, (_, i) => {
+              const starNumber = i + 1;
+              if (calificacion >= starNumber) {
+                // Estrella llena
+                return <span key={i} className="text-yellow-400">★</span>;
+              } else if (calificacion >= starNumber - 0.5) {
+                // Media estrella (usamos un estilo de gradiente o carácter especial)
+                return (
+                  <span key={i} className="relative inline-block text-gray-600">
+                    ★
+                    <span className="absolute top-0 left-0 overflow-hidden w-[50%] text-yellow-400">★</span>
+                  </span>
+                );
+              } else {
+                // Estrella vacía
+                return <span key={i} className="text-gray-600">★</span>;
+              }
+            });
           };
 
           const handleLoginClick = () => {
@@ -304,7 +322,10 @@
                         <span className="bg-red-600/20 text-red-400 px-3 py-1 rounded-md text-sm font-bold border border-red-500/30">
                           {selectedAnime.estado}
                         </span>
-                        <div className="text-xl tracking-widest">{renderStars(selectedAnime.calificacion)}</div>
+                        <div className="flex items-center gap-1">
+                          <div className="text-xl tracking-widest">{renderStars(selectedAnime.calificacion)}</div>
+                          <span className="text-xs text-gray-400 font-mono ml-1">({selectedAnime.calificacion})</span>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 text-sm mb-8 text-gray-300">
@@ -411,11 +432,12 @@
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">Calificación (1-5)</label>
+                          <label className="block text-xs text-gray-400 mb-1">Calificación (1 - 5)</label>
                           <input 
                             type="number" 
                             min="1" 
                             max="5" 
+                            step="0.5" 
                             placeholder="Ej. 4.5" 
                             value={formData.calificacion} 
                             onChange={e => setFormData({...formData, calificacion: Number(e.target.value)})}
