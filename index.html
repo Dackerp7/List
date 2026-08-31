@@ -55,7 +55,7 @@
             try {
               setLoading(true);
               const { data, error } = await supabaseClient
-                .from('AnimeDatabase')
+                .from('animedatabase')
                 .select('*')
                 .order('id', { ascending: false });
 
@@ -120,7 +120,7 @@
             try {
               if (editingAnime) {
                 const { error } = await supabaseClient
-                  .from('AnimeDatabase')
+                  .from('animedatabase')
                   .update({
                     title: formData.title,
                     author: formData.author,
@@ -137,7 +137,7 @@
                 setSelectedAnime({ ...formData, id: editingAnime.id });
               } else {
                 const { error } = await supabaseClient
-                  .from('AnimeDatabase')
+                  .from('animedatabase')
                   .insert([{
                     title: formData.title,
                     author: formData.author,
@@ -163,7 +163,7 @@
             if (confirm('¿Estás seguro de eliminar este anime?')) {
               try {
                 const { error } = await supabaseClient
-                  .from('AnimeDatabase')
+                  .from('animedatabase')
                   .delete()
                   .eq('id', id);
 
